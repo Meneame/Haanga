@@ -35,7 +35,7 @@
   +---------------------------------------------------------------------------------+
 */
 
-class HG_Parser Extends Haanga_Compiler_Parser
+class HG_Parser extends Haanga_Compiler_Parser
 {
     /* subclass to made easier references to constants */
 }
@@ -48,7 +48,7 @@ class HG_Parser Extends Haanga_Compiler_Parser
 class Haanga_Compiler_Tokenizer
 {
     /* they are case sensitive and sorted! */
-    static $keywords = array(
+    public static $keywords = array(
         'AND'           => HG_Parser::T_AND,
         'FALSE'         => HG_Parser::T_FALSE,
         'NOT'           => HG_Parser::T_NOT,
@@ -80,7 +80,7 @@ class Haanga_Compiler_Tokenizer
     );
 
     /* common operations */
-    static $operators_single = array(
+    public static $operators_single = array(
         '!'     => HG_Parser::T_NOT,
         '%'     => HG_Parser::T_MOD,
         '&'     => HG_Parser::T_BITWISE,
@@ -101,7 +101,7 @@ class Haanga_Compiler_Tokenizer
         ']'     => HG_Parser::T_BRACKETS_CLOSE,
         '|'     => HG_Parser::T_FILTER_PIPE,
     );
-    static $operators = array(
+    public static $operators = array(
         '!=='   => HG_Parser::T_NE,
         '!='    => HG_Parser::T_NE,
         '&&'    => HG_Parser::T_AND,
@@ -117,14 +117,14 @@ class Haanga_Compiler_Tokenizer
         '||'    => HG_Parser::T_PIPE,
     );
 
-    static $close_tags = array();
+    public static $close_tags = array();
 
-    static $open_tag     = "{%";
-    static $end_tag      = "%}";
-    static $open_comment = "{#";
-    static $end_comment  = "#}";
-    static $open_print   = "{{";
-    static $end_print    = "}}";
+    public static $open_tag     = "{%";
+    public static $end_tag      = "%}";
+    public static $open_comment = "{#";
+    public static $end_comment  = "#}";
+    public static $open_print   = "{{";
+    public static $end_print    = "}}";
 
     public $open_tags;
     public $value;
@@ -138,7 +138,7 @@ class Haanga_Compiler_Tokenizer
 
     protected $echoFirstToken = false;
 
-    function __construct($data, $compiler, $file)
+    public function __construct($data, $compiler, $file)
     {
         $this->data     = $data;
         $this->compiler = $compiler;
@@ -166,15 +166,15 @@ class Haanga_Compiler_Tokenizer
         );
     }
 
-    function yylex()
+    public function yylex()
     {
-        $this->token = NULL;
+        $this->token = null;
 
         if ($this->length == $this->N) {
             if ($this->status != self::IN_NONE && $this->status != self::IN_HTML) {
                 $this->Error("Unexpected end");
             }
-            return FALSE;
+            return false;
         }
 
         if ($this->status == self::IN_NONE) {
@@ -198,7 +198,7 @@ class Haanga_Compiler_Tokenizer
                     case HG_Parser::T_COMMENT:
                         $zdata = & $this->data;
 
-                        if (($pos=strpos($zdata, self::$end_comment, $i)) === FALSE) {
+                        if (($pos=strpos($zdata, self::$end_comment, $i)) === false) {
                             $this->error("unexpected end");
                         }
 
@@ -211,15 +211,14 @@ class Haanga_Compiler_Tokenizer
                         $this->echoFirstToken = false;
                         break;
                     }
-                    return TRUE;
+                    return true;
                 }
             }
 
             $this->status = self::IN_HTML;
         }
 
-        switch ($this->status)
-        {
+        switch ($this->status) {
             case self::IN_TAG:
             case self::IN_ECHO:
                 $this->yylex_main();
@@ -233,21 +232,20 @@ class Haanga_Compiler_Tokenizer
             if ($this->status != self::IN_NONE && $this->status != self::IN_HTML) {
                 $this->Error("Unexpected end");
             }
-            return FALSE;
+            return false;
         }
 
-        return TRUE;
-
+        return true;
     }
 
-    function yylex_html()
+    public function yylex_html()
     {
         $data = &$this->data;
         $i    = &$this->N;
 
         foreach ($this->open_tags as $value => $status) {
             $pos = strpos($data, $value, $i);
-            if ($pos === FALSE) {
+            if ($pos === false) {
                 continue;
             }
             if (!isset($lowest_pos) || $lowest_pos > $pos) {
@@ -267,11 +265,10 @@ class Haanga_Compiler_Tokenizer
         }
 
         $this->line += substr_count($this->value, "\n");
-
     }
 
 
-    function yylex_main()
+    public function yylex_main()
     {
         $data = &$this->data;
 
@@ -319,7 +316,7 @@ class Haanga_Compiler_Tokenizer
             case '0': case '1': case '2': case '3': case '4':
             case '5': case '6': case '7': case '8': case '9':
                 $value = "";
-                $dot   = FALSE;
+                $dot   = false;
                 for ($e=0; $i < $this->length; ++$e, ++$i) {
                     switch ($data[$i]) {
                     case '0': case '1': case '2': case '3': case '4':
@@ -329,7 +326,7 @@ class Haanga_Compiler_Tokenizer
                     case '.':
                         if (!$dot) {
                             $value .= ".";
-                            $dot    = TRUE;
+                            $dot    = true;
                         } else {
                             $this->error("Invalid number");
                         }
@@ -352,6 +349,7 @@ class Haanga_Compiler_Tokenizer
                     switch ($data[$i]) {
                     case "\n":
                         $this->line++;
+                        // no break
                     case " ": case "\t": case "\r": case "\f":
                         break;
                     case '.':
@@ -361,6 +359,7 @@ class Haanga_Compiler_Tokenizer
                             $i++;
                             return;
                         }
+                        // no break
                     default:
                         /* break main loop */
                         /* and decrease because last processed byte */
@@ -373,10 +372,10 @@ class Haanga_Compiler_Tokenizer
             default:
                 if (!$this->getTag() && !$this->getOperator()) {
                     $alpha = $this->getAlpha();
-                    if ($alpha === FALSE) {
+                    if ($alpha === false) {
                         $this->error("error: unexpected ".substr($data, $i));
                     }
-                    static $tag=NULL;
+                    static $tag=null;
                     if (!$tag) {
                         $tag = Haanga_Extension::getInstance('Tag');
                     }
@@ -388,7 +387,6 @@ class Haanga_Compiler_Tokenizer
                         $this->token = $value ? $value : HG_Parser::T_ALPHA;
                     }
                     $this->value = $alpha;
-
                 }
                 break 2;
             }
@@ -402,10 +400,9 @@ class Haanga_Compiler_Tokenizer
             $this->token == HG_Parser::T_PRINT_CLOSE) {
             $this->status = self::IN_NONE;
         }
-
     }
 
-    function getTag()
+    public function getTag()
     {
         static $lencache = array();
 
@@ -424,7 +421,7 @@ class Haanga_Compiler_Tokenizer
                 $this->value = $value;
                 $i += $len;
 
-                return TRUE;
+                return true;
             }
         }
 
@@ -449,7 +446,7 @@ class Haanga_Compiler_Tokenizer
                     $this->value = $value;
                     $i += $len;
 
-                    return TRUE;
+                    return true;
             }
         }
 
@@ -457,18 +454,18 @@ class Haanga_Compiler_Tokenizer
         if (strncmp($data, "end", 3) == 0) {
             $this->value = $this->getAlpha();
             $this->token = HG_Parser::T_CUSTOM_END;
-            return TRUE;
+            return true;
         }
 
-        return FALSE;
+        return false;
     }
 
-    function Error($text)
+    public function Error($text)
     {
         throw new Haanga_Compiler_Exception($text." in ".$this->file.":".$this->line);
     }
 
-    function getOperator()
+    public function getOperator()
     {
         static $lencache = array();
 
@@ -490,7 +487,7 @@ class Haanga_Compiler_Tokenizer
                 $this->token = $token;
                 $this->value = $value;
                 $i += $len;
-                return TRUE;
+                return true;
             }
         }
 
@@ -500,14 +497,14 @@ class Haanga_Compiler_Tokenizer
                 $this->token = $token;
                 $this->value = $value;
                 $i += 1;
-                return TRUE;
-            } else if ($value > $data) {
+                return true;
+            } elseif ($value > $data) {
                 break;
             }
         }
 
 
-        return FALSE;
+        return false;
     }
 
 
@@ -530,15 +527,15 @@ class Haanga_Compiler_Tokenizer
         );
     }
 
-    function getAlpha()
+    public function getAlpha()
     {
         /* [a-zA-Z_][a-zA-Z0-9_]* */
         $i    = &$this->N;
         $data = &$this->data;
 
-        if (  !('a' <= $data[$i] && 'z' >= $data[$i]) &&
+        if (!('a' <= $data[$i] && 'z' >= $data[$i]) &&
             !('A' <= $data[$i] && 'Z' >= $data[$i]) && $data[$i] != '_') {
-            return FALSE;
+            return false;
         }
 
         $value  = "";
@@ -558,13 +555,13 @@ class Haanga_Compiler_Tokenizer
         return $value;
     }
 
-    function getLine()
+    public function getLine()
     {
         return $this->line;
     }
 
 
-    static function init($template, $compiler, $file='')
+    public static function init($template, $compiler, $file='')
     {
         $lexer  = new Haanga_Compiler_Tokenizer($template, $compiler, $file);
         file_put_contents('/tmp/foo.php', $file . "\n", FILE_APPEND);
@@ -573,8 +570,8 @@ class Haanga_Compiler_Tokenizer
         $parser->compiler = $compiler;
 
         try {
-            for($i=0; ; $i++) {
-                if  (!$lexer->yylex()) {
+            for ($i=0; ; $i++) {
+                if (!$lexer->yylex()) {
                     break;
                 }
                 $parser->doParse($lexer->token, $lexer->value);
@@ -582,14 +579,14 @@ class Haanga_Compiler_Tokenizer
         } catch (Exception $e) {
             /* destroy the parser */
             try {
-                $parser->doParse(0,0);
-            } catch (Exception $y) {}
+                $parser->doParse(0, 0);
+            } catch (Exception $y) {
+            }
             throw $e; /* re-throw exception */
         }
 
         $parser->doParse(0, 0);
 
         return (array)$parser->body;
-
     }
 }
